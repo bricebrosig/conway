@@ -7,11 +7,9 @@ Any live cell with two or three live neighbours lives on to the next generation.
 Any live cell with more than three live neighbours dies, as if by overpopulation.
 Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
-@incomplete - draw board with block characters and borders
 @incomplete - add run option that advances at given speed for given generations
-@incomplete - editor mode
-@incomplete - menu for looking at the different presets
 @incomplete - detect window resize events
+@incomplete - tkinter / turtle gui 
 
 huge
 +-------+
@@ -37,7 +35,7 @@ small
 import os
 from msvcrt import getch  # for edit()
 
-import presets
+import presets 
 from keycodes import *
 
 
@@ -46,6 +44,9 @@ LIVE_COLOR      = "\u001b[30m"
 EDIT_COLOR      = "\u001b[34m"
 CHARACTER       = "\u25A0"
 RESET_CODE      = "\u001b[0m"
+CLEAR_CODE      = "\033c"
+BACKGROUND_WHITE = "\u001b[47m"
+COLOR_BLACK     = "\u001b[30m"
 
 # == "settings" ==
 RESOLUTIONS     = {"small", "regular", "big", "huge"}
@@ -122,8 +123,11 @@ def draw_board(state, editor=(-1, -1)):
             build_str += "\n"
             y_pos = y_pos + 1
 
-        print('\033c' + build_str)
+        print(CLEAR_CODE + build_str)
         return
+
+    # TODO: handle other sizes
+    # TODO: handle editing for other sizes
 
     elif RESOLUTION == "regular":
         height = int(lines / 2) 
@@ -151,32 +155,27 @@ def draw_board(state, editor=(-1, -1)):
         for _ in range(width):
             build_str += "---+"
 
-        print('\033c' + build_str)
+        print(CLEAR_CODE + build_str)
 
 
 def edit(state):
     # @incomplete - this currently only supports windows :/
-
     cols, lines = os.get_terminal_size()
-
-
     edit_x = 0
     edit_y = 0
 
     while True:
         keycode = getch()
 
-        # print(keycode)
-
-        if keycode in [KEY_SPEC, KEY_SPEC_1]:  # red the next keycode appropriately
-            double_keycode = getch()
+        if keycode in [KEY_SPEC, KEY_SPEC_1]:
+            double_keycode = getch()  # read the next keycode appropriately
 
             if double_keycode == KEY_UP:    edit_y = max(edit_y - 1, 0)
             if double_keycode == KEY_DOWN:  edit_y = min(edit_y + 1, lines - 1)
             if double_keycode == KEY_LEFT:  edit_x = max(edit_x - 1, 0)
             if double_keycode == KEY_RIGHT: edit_x = min(edit_x + 1, cols -1)
-            
-            draw_board(state, (edit_x, edit_y))  # nocheckin - this should be conditional on them using an arrow key
+
+            draw_board(state, (edit_x, edit_y))
             
 
         if keycode in [b'\x03', b'q', b'Q']:
@@ -185,20 +184,44 @@ def edit(state):
         if keycode == KEY_RETURN:
             state.add((edit_x, edit_y))
             draw_board(state)
-        
 
+
+def presets_menu():
+    # TODO: draw the preset
+
+    selected_line = 0
+    while True:
+        build_str = CLEAR_CODE + "***** PRESETS *****\n"
+        for i, pre in enumerate(presets.ALL_STR):
+            if i == selected_line:
+                build_str += BACKGROUND_WHITE + COLOR_BLACK + pre + "\n" + RESET_CODE
+            else:
+                build_str += pre + "\n"
+        print(build_str)
+
+        keycode = getch()
+
+        if keycode in [KEY_SPEC, KEY_SPEC_1]:
+            double_keycode = getch()
+            if double_keycode == KEY_UP:    selected_line = max(selected_line - 1, 0)
+            if double_keycode == KEY_DOWN:  selected_line = min(selected_line + 1, len(presets.ALL_STR) - 1)
+
+        if keycode in [b'\x03', b'q', b'Q']:
+            return None
+
+        if keycode == KEY_RETURN:
+            return presets.ALL[selected_line]
 
 
 if __name__ == "__main__":
     state = presets.GLIDER
-    print('\033c')
+    print(CLEAR_CODE)
     draw_board(state)
 
     while True:
         input_str = input("> ")
 
         input_str = input_str.split(" ")
-
         command = input_str[0].lower()
         args = [arg.lower() for arg in input_str[1:]]
 
@@ -220,6 +243,13 @@ if __name__ == "__main__":
             continue
         if command == "edit":
             edit(state)
+        if command == "presets":
+            new_state = presets_menu()
+            if new_state: state = new_state
+            draw_board(state)
+            continue
+        if command == "help":
+            pass  # TODO: implement this
         if command in {"quit", "exit", "stop"}:
             exit(0)
 

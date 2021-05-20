@@ -29,4 +29,15 @@ SQUARE = [
     (2,2)
 ]
 
-ALL = [GLIDER, BLINKER, SQUARE]  # for iterating in a menu
+# for iterating in a menu
+ALL = [
+    GLIDER, 
+    BLINKER, 
+    SQUARE
+]
+
+ALL_STR = [
+    "GLIDER",
+    "BLINKER",
+    "SQUARE"
+]
