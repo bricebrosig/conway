@@ -7,54 +7,48 @@ Any live cell with two or three live neighbours lives on to the next generation.
 Any live cell with more than three live neighbours dies, as if by overpopulation.
 Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
+color links : https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
+
+@incomplete - add more of the common presets to the preset list
+@incomplete - refactor to add typing
+@incomplete - command line options / parsing
+@incomplete - help menu
 @incomplete - add run option that advances at given speed for given generations
 @incomplete - detect window resize events
-@incomplete - tkinter / turtle gui 
+@incomplete - tkinter / turtle gui (this will allow for a lot more intersting editing options)
+@incomplete - run a profiler and find out what is bottlenecking the program; could be:
+    advancement of state
+    building the string
+    actually printing (could try to use std.write? - maybe the tkinter is will be faster since it gets to use 
+    graphics acceleration (i think))
+@incomplete - editing should support mac and windows
+@incomplete - line counters are fun :)
 
-huge
-+-------+
-|       |
-|       |
-|       |
-+-------+
-
-big
-+-----+
-|     |
-|     |
-+-----+
-
-reg
-+---+
-|   |
-+---+
-
-small
-%
+@research - building an actual executable from python code... is that a thing?
 """
 import os
 from msvcrt import getch  # for edit()
 
 import presets 
 from keycodes import *
+from colors import *
 
+from typing import Tuple, Generator
 
-# == codes ==
-LIVE_COLOR      = "\u001b[30m"
-EDIT_COLOR      = "\u001b[34m"
-CHARACTER       = "\u25A0"
+# codes
 RESET_CODE      = "\u001b[0m"
 CLEAR_CODE      = "\033c"
-BACKGROUND_WHITE = "\u001b[47m"
-COLOR_BLACK     = "\u001b[30m"
 
 # == "settings" ==
-RESOLUTIONS     = {"small", "regular", "big", "huge"}
+LIVE_COLOR      = FG_BLACK
+EDIT_COLOR      = FG_BLUE
+CHARACTER       = "\u25A0"
+RESOLUTIONS     = {"small", "big"}
 RESOLUTION      = "small"
 
 
 # return a generator of the neighbors to the given cell
-def neighbors(cell):
+def neighbors(cell: Tuple[int, int]) -> Generator:
     x, y = cell
     yield x + 1, y
     yield x - 1, y
@@ -69,7 +63,8 @@ def neighbors(cell):
 # advance one step of the game
 #
 # @param state - set of the "live" cells : (x, y) tuples
-def advance(state):
+# @return new state of the game
+def advance(state: set) -> set:
     new_state = set()
     min_x = min([x for x, _ in state])
     max_x = max([x for x, _ in state])
@@ -96,7 +91,7 @@ def advance(state):
     return new_state
 
 
-def draw_board(state, editor=(-1, -1)):
+def draw_board(state: set, editor: tuple = (-1, -1)) -> None:
     cols, lines = os.get_terminal_size()
 
     build_str = ""
@@ -126,10 +121,7 @@ def draw_board(state, editor=(-1, -1)):
         print(CLEAR_CODE + build_str)
         return
 
-    # TODO: handle other sizes
-    # TODO: handle editing for other sizes
-
-    elif RESOLUTION == "regular":
+    elif RESOLUTION == "big":
         height = int(lines / 2) 
         width = int(cols / 4)
 
@@ -158,8 +150,7 @@ def draw_board(state, editor=(-1, -1)):
         print(CLEAR_CODE + build_str)
 
 
-def edit(state):
-    # @incomplete - this currently only supports windows :/
+def edit(state: set) -> None:
     cols, lines = os.get_terminal_size()
     edit_x = 0
     edit_y = 0
@@ -194,7 +185,7 @@ def presets_menu():
         build_str = CLEAR_CODE + "***** PRESETS *****\n"
         for i, pre in enumerate(presets.ALL_STR):
             if i == selected_line:
-                build_str += BACKGROUND_WHITE + COLOR_BLACK + pre + "\n" + RESET_CODE
+                build_str += BG_WHITE + FG_BLACK + pre + "\n" + RESET_CODE
             else:
                 build_str += pre + "\n"
         print(build_str)
@@ -249,7 +240,7 @@ if __name__ == "__main__":
             draw_board(state)
             continue
         if command == "help":
-            pass  # TODO: implement this
+            pass
         if command in {"quit", "exit", "stop"}:
             exit(0)
 
