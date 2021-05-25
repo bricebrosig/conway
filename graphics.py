@@ -57,4 +57,6 @@ def draw(state: set, buff: str, editor: tuple = (-1, -1), cell_res: int = 10) ->
     for x, y in state:
         draw_cell(x * cell_res, y * cell_res, "black", cell_res)
     draw_command_line(buff)
+    edit_x, edit_y = editor
+    draw_cell(edit_x, edit_y, "blue", cell_res)
     update()

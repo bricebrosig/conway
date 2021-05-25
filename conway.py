@@ -9,20 +9,21 @@ Any dead cell with exactly three live neighbours becomes a live cell, as if by r
 
 color links : https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
 
-@incomplete - gui editor
 @incomplete - add more of the common presets to the preset list
-@incomplete - command line options / parsing
 @incomplete - help menu
+@incomplete - preset menu
 @incomplete - add run option that advances at given speed for given generations
-@research - building an actual executable from python code... is that a thing?
 """
 import presets 
 from graphics import *
 from typing import Tuple, Generator
+from time import sleep
 
-global_input_buffer: str = ""
-global_state: set = set()
+input_buffer: str = ""
+state: set = set()
 CELL_RES: int = 10  # resolution of a cell in pixels
+RUN_DELAY: float = .1 
+is_running, keep_running = False, True
 
 # get the neighbors to a cell
 #
@@ -58,7 +59,6 @@ def advance(state: set) -> set:
             for neighbor in neighbors(cell):
                 if neighbor in state:
                     live_count = live_count + 1
-            
             if cell in state:  # alive
                 if live_count == 2 or live_count == 3:
                     new_state.add(cell)
@@ -68,158 +68,191 @@ def advance(state: set) -> set:
     return new_state
 
 
+def handle_left_click(x, y):
+    global state, is_running, keep_running
+    if is_running:
+        keep_running = False
+        return
+
+    x, y = int(x / CELL_RES), int(y / CELL_RES) + 1
+
+    state.add((x, y))
+    
+    draw(state, input_buffer, cell_res=CELL_RES)
+
+def handle_right_click(x, y):
+    global state
+
+    x, y = int(x / CELL_RES), int(y / CELL_RES) + 1
+
+    state.remove((x, y))
+    draw(state, input_buffer, cell_res=CELL_RES)
+
+
 def handle_enter():
-    global global_state, global_input_buffer
-    command: str = global_input_buffer.lower().strip()
+    global state, input_buffer, is_running, keep_running
+    command: str = input_buffer.lower().strip()
+    input_buffer = ""
     
     if command in {"exit", "quit", "q"}:
         exit(0)
+    if command == "clear":
+        state = set()
+        draw(state, input_buffer)
+    if command == "run":
+        is_running = True
+        while state and keep_running:
+            state = advance(state)
+            draw(state, input_buffer)
+            sleep(RUN_DELAY)
+        is_running = False
+        keep_running = True
     elif command == "":
-        global_state = advance(global_state)
-        draw(global_state, global_input_buffer)
+        state = advance(state)
+        draw(state, input_buffer)
 
 def handle_backspace():
-    global global_state, global_input_buffer
-    global_input_buffer = global_input_buffer[:-1]
-    draw(global_state, global_input_buffer)
+    global state, input_buffer
+    input_buffer = input_buffer[:-1]
+    draw(state, input_buffer)
 
 def handle_a():
-    global global_input_buffer
-    global_input_buffer += "a"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "a"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_b():
-    global global_input_buffer
-    global_input_buffer += "b"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "b"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_c():
-    global global_input_buffer
-    global_input_buffer += "c"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "c"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_d():
-    global global_input_buffer
-    global_input_buffer += "d"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "d"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_e():
-    global global_input_buffer
-    global_input_buffer += "e"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "e"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_f():
-    global global_input_buffer
-    global_input_buffer += "f"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "f"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_g():
-    global global_input_buffer
-    global_input_buffer += "g"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "g"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_h():
-    global global_input_buffer
-    global_input_buffer += "h"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "h"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_i():
-    global global_input_buffer
-    global_input_buffer += "i"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "i"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_j():
-    global global_input_buffer
-    global_input_buffer += "j"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "j"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_k():
-    global global_input_buffer
-    global_input_buffer += "k"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "k"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_l():
-    global global_input_buffer
-    global_input_buffer += "l"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "l"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_m():
-    global global_input_buffer
-    global_input_buffer += "m"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "m"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_n():
-    global global_input_buffer
-    global_input_buffer += "n"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "n"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_o():
-    global global_input_buffer
-    global_input_buffer += "o"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "o"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_p():
-    global global_input_buffer
-    global_input_buffer += "p"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "p"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_q():
-    global global_input_buffer
-    global_input_buffer += "q"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "q"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_r():
-    global global_input_buffer
-    global_input_buffer += "r"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "r"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_s():
-    global global_input_buffer
-    global_input_buffer += "s"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "s"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_t():
-    global global_input_buffer
-    global_input_buffer += "t"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "t"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_u():
-    global global_input_buffer
-    global_input_buffer += "u"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "u"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_v():
-    global global_input_buffer
-    global_input_buffer += "v"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "v"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_w():
-    global global_input_buffer
-    global_input_buffer += "w"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "w"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_x():
-    global global_input_buffer
-    global_input_buffer += "x"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "x"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_y():
-    global global_input_buffer
-    global_input_buffer += "y"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "y"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_z():
-    global global_input_buffer
-    global_input_buffer += "z"
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += "z"
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 def handle_space():
-    global global_input_buffer
-    global_input_buffer += " "
-    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+    global input_buffer
+    input_buffer += " "
+    draw(state, input_buffer, cell_res=CELL_RES)
 
 
-def register_keys():
+def register_events():
     onkeypress(handle_a, "a")
     onkeypress(handle_b, "b") 
     onkeypress(handle_c, "c") 
@@ -250,13 +283,16 @@ def register_keys():
     onkeypress(handle_backspace, "BackSpace")
     onkeypress(handle_space, "space")
 
+    onscreenclick(handle_left_click)
+    onscreenclick(handle_right_click, btn=3)
+
 
 if __name__ == "__main__":
-    global_state = presets.GLIDER
+    state = presets.GLIDER
 
     init_turtle(800, 600)
-    draw(global_state, "", cell_res=CELL_RES)
+    draw(state, "", cell_res=CELL_RES)
 
-    register_keys()
+    register_events()
     listen()
     mainloop()
