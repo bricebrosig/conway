@@ -49,19 +49,10 @@ def test_advance() -> List:
     return failures
 
 
-def test_draw_board():
-    return []
-
-
 def run_tests():
     print("== testing advance ==")
     failures = test_advance()
     for fail_string in failures:
-        print(fail_string)
-
-    print("== testing draw_board ==")
-    failures = test_draw_board()
-    for fail_string in failures: 
         print(fail_string)
 
 
