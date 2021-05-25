@@ -9,42 +9,26 @@ Any dead cell with exactly three live neighbours becomes a live cell, as if by r
 
 color links : https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
 
+@incomplete - command line
+@incomplete - gui editor
 @incomplete - add more of the common presets to the preset list
 @incomplete - refactor to add typing
 @incomplete - command line options / parsing
 @incomplete - help menu
 @incomplete - add run option that advances at given speed for given generations
-@incomplete - detect window resize events
-@incomplete - tkinter / turtle gui (this will allow for a lot more intersting editing options)
-@incomplete - run a profiler and find out what is bottlenecking the program; could be:
-    advancement of state
-    building the string
-    actually printing (could try to use std.write? - maybe the tkinter is will be faster since it gets to use 
-    graphics acceleration (i think))
-@incomplete - editing should support mac and windows
 @incomplete - line counters are fun :)
 
 @research - building an actual executable from python code... is that a thing?
 """
-import os
-from msvcrt import getch  # for edit()
-
 import presets 
-from keycodes import *
-from colors import *
+from graphics import *
 
 from typing import Tuple, Generator
 
-# codes
-RESET_CODE      = "\u001b[0m"
-CLEAR_CODE      = "\033c"
 
-# == "settings" ==
-LIVE_COLOR      = FG_BLACK
-EDIT_COLOR      = FG_BLUE
-CHARACTER       = "\u25A0"
-RESOLUTIONS     = {"small", "big"}
-RESOLUTION      = "small"
+global_input_buffer: str = ""
+global_state: set = set()
+CELL_RES: int = 10  # resolution of a cell in pixels
 
 
 # return a generator of the neighbors to the given cell
@@ -71,9 +55,6 @@ def advance(state: set) -> set:
     min_y = min([y for _, y in state])
     max_y = max([y for _, y in state])
     
-    # @speed
-    # 
-    # there must be a way to figure out which dead cells should be revived
     for x in range(min_x - 1, max_x + 2):
         for y in range(min_y - 1, max_y + 2):
             cell = (x, y)
@@ -91,158 +72,171 @@ def advance(state: set) -> set:
     return new_state
 
 
-def draw_board(state: set, editor: tuple = (-1, -1)) -> None:
-    cols, lines = os.get_terminal_size()
-
-    build_str = ""
-    x_pos = 0
-    y_pos = 0
-
-    if RESOLUTION == "small":
-        height = lines - 1
-        width = cols - 1 
-
-        for _ in range(height):
-            save_x = x_pos
-            for _ in range(width):
-                if (x_pos, y_pos) in state:
-                    build_str += LIVE_COLOR + CHARACTER
-                    build_str += RESET_CODE
-                elif (x_pos, y_pos) == editor:
-                    build_str += EDIT_COLOR + CHARACTER
-                    build_str += RESET_CODE
-                else:
-                    build_str += CHARACTER
-                x_pos = x_pos + 1
-            x_pos = save_x
-            build_str += "\n"
-            y_pos = y_pos + 1
-
-        print(CLEAR_CODE + build_str)
-        return
-
-    elif RESOLUTION == "big":
-        height = int(lines / 2) 
-        width = int(cols / 4)
-
-        for _ in range(height):
-            build_str += "+"
-            for _ in range(width):
-                build_str += "---+"
-
-            save_x = x_pos
-            build_str += "\n|"
-            for _ in range(width):
-                if (x_pos, y_pos) in state:
-                    build_str += "%%%|"
-                else:
-                    build_str += "   |"
-                x_pos = x_pos + 1
-            x_pos = save_x
-
-            build_str += "\n"
-            y_pos = y_pos + 1
-
-        build_str += "+"
-        for _ in range(width):
-            build_str += "---+"
-
-        print(CLEAR_CODE + build_str)
+def handle_enter():
+    global global_state, global_input_buffer
+    command = global_input_buffer.lower().strip()
+    
+    if command in {"exit", "quit", "q"}:
+        exit(0)
+    elif command == "":
+        global_state = advance(global_state)
+        draw(global_state, global_input_buffer)
 
 
-def edit(state: set) -> None:
-    cols, lines = os.get_terminal_size()
-    edit_x = 0
-    edit_y = 0
-
-    while True:
-        keycode = getch()
-
-        if keycode in [KEY_SPEC, KEY_SPEC_1]:
-            double_keycode = getch()  # read the next keycode appropriately
-
-            if double_keycode == KEY_UP:    edit_y = max(edit_y - 1, 0)
-            if double_keycode == KEY_DOWN:  edit_y = min(edit_y + 1, lines - 1)
-            if double_keycode == KEY_LEFT:  edit_x = max(edit_x - 1, 0)
-            if double_keycode == KEY_RIGHT: edit_x = min(edit_x + 1, cols -1)
-
-            draw_board(state, (edit_x, edit_y))
-            
-
-        if keycode in [b'\x03', b'q', b'Q']:
-            return
-
-        if keycode == KEY_RETURN:
-            state.add((edit_x, edit_y))
-            draw_board(state)
+def handle_backspace():
+    global global_state, global_input_buffer
+    global_input_buffer = global_input_buffer[:-1]
+    draw(global_state, global_input_buffer)
 
 
-def presets_menu():
-    # TODO: draw the preset
+def handle_a():
+    global global_input_buffer
+    global_input_buffer += "a"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_b():
+    global global_input_buffer
+    global_input_buffer += "b"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_c():
+    global global_input_buffer
+    global_input_buffer += "c"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_d():
+    global global_input_buffer
+    global_input_buffer += "d"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_e():
+    global global_input_buffer
+    global_input_buffer += "e"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_f():
+    global global_input_buffer
+    global_input_buffer += "f"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_g():
+    global global_input_buffer
+    global_input_buffer += "g"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_h():
+    global global_input_buffer
+    global_input_buffer += "h"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_i():
+    global global_input_buffer
+    global_input_buffer += "i"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_j():
+    global global_input_buffer
+    global_input_buffer += "j"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_k():
+    global global_input_buffer
+    global_input_buffer += "k"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_l():
+    global global_input_buffer
+    global_input_buffer += "l"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_m():
+    global global_input_buffer
+    global_input_buffer += "m"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_n():
+    global global_input_buffer
+    global_input_buffer += "n"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_o():
+    global global_input_buffer
+    global_input_buffer += "o"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_p():
+    global global_input_buffer
+    global_input_buffer += "p"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_q():
+    global global_input_buffer
+    global_input_buffer += "q"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_r():
+    global global_input_buffer
+    global_input_buffer += "r"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_s():
+    global global_input_buffer
+    global_input_buffer += "s"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_t():
+    global global_input_buffer
+    global_input_buffer += "t"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_u():
+    global global_input_buffer
+    global_input_buffer += "u"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_v():
+    global global_input_buffer
+    global_input_buffer += "v"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_w():
+    global global_input_buffer
+    global_input_buffer += "w"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_x():
+    global global_input_buffer
+    global_input_buffer += "x"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_y():
+    global global_input_buffer
+    global_input_buffer += "y"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_z():
+    global global_input_buffer
+    global_input_buffer += "z"
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
+def handle_space():
+    global global_input_buffer
+    global_input_buffer += " "
+    draw(global_state, global_input_buffer, cell_res=CELL_RES)
 
-    selected_line = 0
-    while True:
-        build_str = CLEAR_CODE + "***** PRESETS *****\n"
-        for i, pre in enumerate(presets.ALL_STR):
-            if i == selected_line:
-                build_str += BG_WHITE + FG_BLACK + pre + "\n" + RESET_CODE
-            else:
-                build_str += pre + "\n"
-        print(build_str)
 
-        keycode = getch()
-
-        if keycode in [KEY_SPEC, KEY_SPEC_1]:
-            double_keycode = getch()
-            if double_keycode == KEY_UP:    selected_line = max(selected_line - 1, 0)
-            if double_keycode == KEY_DOWN:  selected_line = min(selected_line + 1, len(presets.ALL_STR) - 1)
-
-        if keycode in [b'\x03', b'q', b'Q']:
-            return None
-
-        if keycode == KEY_RETURN:
-            return presets.ALL[selected_line]
+def register_keys():
+    onkey(handle_a, "a")
+    onkey(handle_b, "b") 
+    onkey(handle_c, "c") 
+    onkey(handle_d, "d") 
+    onkey(handle_e, "e") 
+    onkey(handle_f, "f") 
+    onkey(handle_g, "g") 
+    onkey(handle_h, "h") 
+    onkey(handle_i, "i") 
+    onkey(handle_j, "j") 
+    onkey(handle_k, "k") 
+    onkey(handle_l, "l") 
+    onkey(handle_m, "m") 
+    onkey(handle_n, "n") 
+    onkey(handle_o, "o") 
+    onkey(handle_p, "p") 
+    onkey(handle_q, "q") 
+    onkey(handle_r, "r") 
+    onkey(handle_s, "s") 
+    onkey(handle_t, "t") 
+    onkey(handle_u, "u") 
+    onkey(handle_v, "v") 
+    onkey(handle_w, "w") 
+    onkey(handle_x, "x") 
+    onkey(handle_y, "y") 
+    onkey(handle_z, "z") 
+    onkey(handle_enter, "Return")
+    onkey(handle_backspace, "BackSpace")
+    onkey(handle_space, "space")
 
 
 if __name__ == "__main__":
-    state = presets.GLIDER
-    print(CLEAR_CODE)
-    draw_board(state)
+    global_state = presets.GLIDER
 
-    while True:
-        input_str = input("> ")
+    init_turtle(800, 600)
+    draw(global_state, "", cell_res=CELL_RES)
 
-        input_str = input_str.split(" ")
-        command = input_str[0].lower()
-        args = [arg.lower() for arg in input_str[1:]]
-
-        if command == "glider":
-            state = presets.GLIDER
-            draw_board(state)
-            continue
-        if command == "blinker":
-            state = presets.BLINKER
-            draw_board(state)
-            continue
-        if command == "square":
-            state = presets.SQUARE
-            draw_board(state)
-            continue
-        if command == "size" and args:
-            RESOLUTION = args[0]
-            draw_board(state)
-            continue
-        if command == "edit":
-            edit(state)
-        if command == "presets":
-            new_state = presets_menu()
-            if new_state: state = new_state
-            draw_board(state)
-            continue
-        if command == "help":
-            pass
-        if command in {"quit", "exit", "stop"}:
-            exit(0)
-
-        state = advance(state)
-        draw_board(state)
+    register_keys()
+    listen()
+    mainloop()
