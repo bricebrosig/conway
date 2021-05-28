@@ -7,39 +7,36 @@ Any live cell with two or three live neighbours lives on to the next generation.
 Any live cell with more than three live neighbours dies, as if by overpopulation.
 Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
-color links : https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
-
-@incomplete - add more of the common presets to the preset list
+@incomplete - menu screen
 @incomplete - help menu
 @incomplete - preset menu
-@incomplete - add run option that advances at given speed for given generations
+@incomplete - have a button that pulls up the command line
 """
-import presets 
-from graphics import *
+
 from typing import Tuple, Generator
 from time import sleep
+from functools import partial
+
+import presets 
+from graphics import *
+
+# ================= settings =====================
+
+class GameState:
+    GAME = 1
+    MENU = 2
+    COMMAND = 3
 
 input_buffer: str = ""
 state: set = set()
 CELL_RES: int = 10  # resolution of a cell in pixels
 RUN_DELAY: float = .1 
 is_running, keep_running = False, True
+game_state: int = GameState.GAME
+screen = None
+turtle = None
 
-# get the neighbors to a cell
-#
-# @param cell (tuple) - x, y coordinate of the cell
-# @return generator of tuples: (x, y) coords
-def neighbors(cell: Tuple[int, int]) -> Generator:
-    x, y = cell
-    yield x + 1, y
-    yield x - 1, y
-    yield x, y + 1 
-    yield x, y - 1
-    yield x + 1, y + 1
-    yield x + 1, y - 1
-    yield x - 1, y + 1
-    yield x - 1, y - 1 
-
+# ==================================================
 
 # advance one step of the game
 #
@@ -51,6 +48,17 @@ def advance(state: set) -> set:
     max_x: int = max([x for x, _ in state])
     min_y: int = min([y for _, y in state])
     max_y: int = max([y for _, y in state])
+
+    def neighbors(cell: Tuple[int, int]) -> Generator:
+        x, y = cell
+        yield x + 1, y
+        yield x - 1, y
+        yield x, y + 1 
+        yield x, y - 1
+        yield x + 1, y + 1
+        yield x + 1, y - 1
+        yield x - 1, y + 1
+        yield x - 1, y - 1 
     
     for x in range(min_x - 1, max_x + 2):
         for y in range(min_y - 1, max_y + 2):
@@ -69,230 +77,100 @@ def advance(state: set) -> set:
 
 
 def handle_left_click(x, y):
-    global state, is_running, keep_running
+    global state, is_running, keep_running, screen, turtle
     if is_running:
         keep_running = False
         return
 
     x, y = int(x / CELL_RES), int(y / CELL_RES) + 1
-
     state.add((x, y))
-    
-    draw(state, input_buffer, cell_res=CELL_RES)
+    draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
+
 
 def handle_right_click(x, y):
-    global state
+    global state, screen, turtle
 
     x, y = int(x / CELL_RES), int(y / CELL_RES) + 1
-
     state.remove((x, y))
-    draw(state, input_buffer, cell_res=CELL_RES)
+    draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
 
 
-def handle_enter():
-    global state, input_buffer, is_running, keep_running
-    command: str = input_buffer.lower().strip()
+def handle_enter(*args):
+    # global state, input_buffer, is_running, keep_running, CELL_RES, screen, turtle
+    global state, input_buffer, CELL_RES, keep_running, is_running
+
+    command: str = input_buffer.lower().strip().split(" ")[0]
+    args: list = input_buffer.lower().strip().split(" ")[1:]
     input_buffer = ""
-    
+
     if command in {"exit", "quit", "q"}:
         exit(0)
-    if command == "clear":
+    elif command == "clear":
         state = set()
-        draw(state, input_buffer)
-    if command == "run":
+        draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
+    elif command == "size":
+        if len(args) == 1:
+            CELL_RES = int(args[0])
+        draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
+    elif command == "run":
         is_running = True
         while state and keep_running:
             state = advance(state)
-            draw(state, input_buffer)
-            sleep(RUN_DELAY)
+            draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
+            sleep(RUN_DELAY)   # TODO: using sleep here is pretty bad
         is_running = False
         keep_running = True
     elif command == "":
         state = advance(state)
-        draw(state, input_buffer)
+        draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
 
-def handle_backspace():
-    global state, input_buffer
+
+def handle_backspace(*args):
+    global input_buffer
     input_buffer = input_buffer[:-1]
-    draw(state, input_buffer)
-
-def handle_a():
-    global input_buffer
-    input_buffer += "a"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_b():
-    global input_buffer
-    input_buffer += "b"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_c():
-    global input_buffer
-    input_buffer += "c"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_d():
-    global input_buffer
-    input_buffer += "d"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_e():
-    global input_buffer
-    input_buffer += "e"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_f():
-    global input_buffer
-    input_buffer += "f"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_g():
-    global input_buffer
-    input_buffer += "g"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_h():
-    global input_buffer
-    input_buffer += "h"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_i():
-    global input_buffer
-    input_buffer += "i"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_j():
-    global input_buffer
-    input_buffer += "j"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_k():
-    global input_buffer
-    input_buffer += "k"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_l():
-    global input_buffer
-    input_buffer += "l"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_m():
-    global input_buffer
-    input_buffer += "m"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_n():
-    global input_buffer
-    input_buffer += "n"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_o():
-    global input_buffer
-    input_buffer += "o"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_p():
-    global input_buffer
-    input_buffer += "p"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_q():
-    global input_buffer
-    input_buffer += "q"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_r():
-    global input_buffer
-    input_buffer += "r"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_s():
-    global input_buffer
-    input_buffer += "s"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_t():
-    global input_buffer
-    input_buffer += "t"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_u():
-    global input_buffer
-    input_buffer += "u"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_v():
-    global input_buffer
-    input_buffer += "v"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_w():
-    global input_buffer
-    input_buffer += "w"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_x():
-    global input_buffer
-    input_buffer += "x"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_y():
-    global input_buffer
-    input_buffer += "y"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_z():
-    global input_buffer
-    input_buffer += "z"
-    draw(state, input_buffer, cell_res=CELL_RES)
-
-def handle_space():
-    global input_buffer
-    input_buffer += " "
-    draw(state, input_buffer, cell_res=CELL_RES)
+    draw(turtle, screen, state, input_buffer)
 
 
-def register_events():
-    onkeypress(handle_a, "a")
-    onkeypress(handle_b, "b") 
-    onkeypress(handle_c, "c") 
-    onkeypress(handle_d, "d") 
-    onkeypress(handle_e, "e") 
-    onkeypress(handle_f, "f") 
-    onkeypress(handle_g, "g") 
-    onkeypress(handle_h, "h") 
-    onkeypress(handle_i, "i") 
-    onkeypress(handle_j, "j") 
-    onkeypress(handle_k, "k") 
-    onkeypress(handle_l, "l") 
-    onkeypress(handle_m, "m") 
-    onkeypress(handle_n, "n") 
-    onkeypress(handle_o, "o") 
-    onkeypress(handle_p, "p") 
-    onkeypress(handle_q, "q") 
-    onkeypress(handle_r, "r") 
-    onkeypress(handle_s, "s") 
-    onkeypress(handle_t, "t") 
-    onkeypress(handle_u, "u") 
-    onkeypress(handle_v, "v") 
-    onkeypress(handle_w, "w") 
-    onkeypress(handle_x, "x") 
-    onkeypress(handle_y, "y") 
-    onkeypress(handle_z, "z") 
-    onkeypress(handle_enter, "Return")
-    onkeypress(handle_backspace, "BackSpace")
-    onkeypress(handle_space, "space")
+def key_handler(key):
+    global state, input_buffer, is_running, keep_running, CELL_RES, screen, turtle
 
-    onscreenclick(handle_left_click)
-    onscreenclick(handle_right_click, btn=3)
+    if key in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYS1234567890 ":  # alphanum
+        input_buffer += key
+        draw(turtle, screen, state, input_buffer, cell_res=CELL_RES)
+
+
+def _onkeypress(self, fun, key=None):
+    if fun is None:
+        if key is None:
+            self.cv.unbind("<KeyPress>", None)
+        else:
+            self.cv.unbind("<KeyPress-%s>" % key, None)
+    else:
+        def eventfun(event):
+            fun(event.char)
+
+        if key is None:
+            self.cv.bind("<KeyPress>", eventfun)
+        else:
+            self.cv.bind("<KeyPress-%s>" % key, eventfun)
+
+
+def main():
+    global state, screen, turtle
+    state = presets.GLIDER
+
+    screen, turtle = init_turtle(800, 600)
+    draw(turtle, screen, state, "", cell_res=CELL_RES)
+
+    screen._onkeypress = partial(_onkeypress, screen)
+    screen.onkeypress(handle_enter, "Return")
+    screen.onkeypress(handle_backspace, "BackSpace")
+    screen.onkeypress(key_handler)
+    screen.onscreenclick(handle_left_click)
+    screen.onscreenclick(handle_right_click, btn=3)
+    screen.listen()
+    screen.mainloop()
 
 
 if __name__ == "__main__":
-    state = presets.GLIDER
-
-    init_turtle(800, 600)
-    draw(state, "", cell_res=CELL_RES)
-
-    register_events()
-    listen()
-    mainloop()
+    main()

@@ -6,7 +6,6 @@ test suite for conway's game of life
 from conway import *
 from typing import List
 
-# TODO: make fail print in red
 def test_advance() -> List:
     failures = []
 
@@ -32,7 +31,7 @@ def test_advance() -> List:
         failures.append("Test 3: almost square -> still life")
 
     print("reproduction : ", end="")
-    if advance({(1, 1), (2, 1), (3, 1)}) == {(1, 1), (2, 1), (3, 1), (2, 0), (2, 2)}:
+    if advance({(1, 1), (2, 1), (3, 1)}) == {(2, 1), (2, 0), (2, 2)}:
         print("OK")
     else:
         print("FAILED")
